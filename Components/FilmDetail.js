@@ -1,7 +1,7 @@
 // Components/FilmDetail.js
 
 import React from 'react'
-import { StyleSheet, View, Text,ActivityIndicator,ScrollView,Image,Button } from 'react-native'
+import { StyleSheet, View, Text,ActivityIndicator,ScrollView,Image,Button,TouchableOpacity } from 'react-native'
 import { getFilmDetailFromApi,getImageFromApi } from '../API/TMDBApi'
 import moment from 'moment'
 import numeral from 'numeral'
@@ -24,6 +24,10 @@ class FilmDetail extends React.Component {
 
     })
   }
+  componentDidUpdate(){
+    console.log('componentDidUpdate : ')
+    console.log(this.props.favoritesFilm)
+  }
 _displayLoading(){
   if(this.state.isLoading){
     return (
@@ -34,7 +38,20 @@ _displayLoading(){
   }
 }
 _toggleFavorite(){
-
+  const action = { type:'TOGGLE_FAVORITE',value:this.state.film}
+  this.props.dispatch(action)
+}
+_displayFavoriteImage(){
+  var sourceImage = require('../Images/ic_favorite_border.png')
+  if(this.props.favoritesFilm.findIndex(item=>item.id===this.state.film.id) !== -1) {
+    sourceImage = require('../Images/ic_favorite.png')
+  }
+  return (
+    <Image
+      style={styles.favorite_image}
+      source={sourceImage}
+      />
+  )
 }
 _displayFilm() {
   const {film} = this.state
@@ -46,7 +63,11 @@ _displayFilm() {
         source={{uri: getImageFromApi(this.state.film.backdrop_path)}}
       />
       <Text style={styles.title}>{film.title}</Text>
-      <Button title="Favoris" onPress={() => this._toggleFavorite()} />
+      <TouchableOpacity
+        style={styles.favorite_container}
+        onPress={() => this._toggleFavorite()}>
+        {this._displayFavoriteImage()}
+      </TouchableOpacity>
       <Text style={styles.text}>{film.overview}</Text>
       <Text style={styles.list}>Sorti le {moment(new Date(film.release_date)).format('DD/MM/YYYY')}</Text>
       <Text style={styles.list}>Note : {film.vote_average}</Text>
@@ -117,12 +138,23 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     marginRight: 5,
     marginTop: 5,
-  }
+  },
+  favorite_container: {
+    alignItems: 'center', // Alignement des components enfants sur l'axe secondaire, X ici
+  },
+  favorite_image: {
+    width: 40,
+    height: 40
+}
 })
 const mapStateToProps = (state) => {
   return {
     favoritesFilm:state.favoritesFilm
   }
 }
-
-export default connect(mapStateToProps)(FilmDetail)
+const mapDispatchToProps = (dispatch) => {
+  return {
+    dispatch : (action) => { dispatch(action)}
+  }
+}
+export default connect(mapStateToProps,mapDispatchToProps)(FilmDetail)
